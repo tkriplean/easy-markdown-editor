@@ -866,11 +866,13 @@ function afterImageUploaded(editor, url) {
     var stat = getState(cm);
     var options = editor.options;
     var imageName = url.substr(url.lastIndexOf('/') + 1);
-    var ext = imageName.substring(imageName.lastIndexOf('.') + 1).replace(/\?.*$/, '');
+    var ext = imageName.substring(imageName.lastIndexOf('.') + 1).replace(/\?.*$/, '').toLowerCase();
 
     // Check if media is an image
     if (['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(ext)) {
       _replaceSelection(cm, stat.image, options.insertTexts.uploadedImage, url);
+    } else if (['mov'].includes(ext)) {
+      _replaceSelection(cm, stat.image, options.insertTexts.uploadedMovie, url);
     } else {
       var text_link = options.insertTexts.link;
       text_link[0] = '[' + imageName;
@@ -1076,8 +1078,8 @@ function _replaceSelection(cm, active, startEnd, url) {
     Object.assign(startPoint, cm.getCursor('start'));
     Object.assign(endPoint, cm.getCursor('end'));
     if (url) {
-        start = start.replace('#url#', url);  // url is in start for upload-image
-        end = end.replace('#url#', url);
+        start = start.replaceAll('#url#', url).replaceAll('#extentionless_url#', url.substr(0, url.lastIndexOf('.')) || url);  // url is in start for upload-image
+        end = end.replaceAll('#url#', url).replaceAll('#extentionless_url#', url.substr(0, url.lastIndexOf('.')) || url);
     }
     if (active) {
         text = cm.getLine(startPoint.line);
@@ -1599,6 +1601,13 @@ var insertTexts = {
     link: ['[', '](#url#)'],
     image: ['![](', '#url#)'],
     uploadedImage: ['![](#url#)', ''],
+    uploadedMovie: [
+      '<video width="100%" controls autoplay loop muted>\n \
+        <source src="#extentionless_url#.mp4" type="video/mp4">\n \
+        <source src="#extentionless_url#.ogg" type="video/ogg">\n \
+       </video> \
+      ', 
+    ''],
     // uploadedImage: ['![](#url#)\n', ''], // TODO: New line insertion doesn't work here.
     table: ['', '\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |\n\n'],
     horizontalRule: ['', '\n\n-----\n\n'],
